@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrar Approvals — SFPRS</title>
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">M</div>
+        <div class="logo-text">
+          <strong>Microlink IT</strong>
+          <span>Registrar Console</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Registrations</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Approvals
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        All Students
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <strong class="user-name">Loading...</strong>
+          <span class="user-role">Registrar</span>
+        </div>
+        <button id="logoutBtn" title="Logout">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-title">
+        <h2 id="greeting">Welcome</h2>
+        <p class="text-sm text-muted">Review and approve student registrations.</p>
+      </div>
+    </header>
+
+    <div class="content-body fade-up delay-1">
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin-bottom:24px;">
+        <div class="panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <h3 class="text-muted text-sm">Pending Approvals</h3>
+          <h2 id="statPending" style="font-size:2.5rem; color:var(--rose);">--</h2>
+        </div>
+        <div class="panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <h3 class="text-muted text-sm">Active Students</h3>
+          <h2 id="statActive" style="font-size:2.5rem; color:var(--mint);">--</h2>
+        </div>
+        <div class="panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+          <h3 class="text-muted text-sm">Total Students</h3>
+          <h2 id="statTotal" style="font-size:2.5rem;">--</h2>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Recent Applications</h3>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Applicant</th>
+                <th>Department</th>
+                <th>Course</th>
+                <th>Status</th>
+                <th>Applied At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="regsTbody">
+              <tr>
+                <td colspan="6">
+                  <div class="skeleton skeleton-text"></div>
+                  <div class="skeleton skeleton-text"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../shared/auth.js"></script>
+<script src="../shared/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!AUTH.requireRole('registrar', 'super_admin')) return;
+  AUTH.injectSidebarUser();
+  document.getElementById('greeting').textContent = AUTH.getGreeting();
+
+  await Promise.all([loadStats(), loadRegistrations()]);
+});
+
+async function loadStats() {
+  try {
+    const data = await API.student('/dashboard-stats');
+    document.getElementById('statPending').textContent = data.pendingRegistrations;
+    document.getElementById('statActive').textContent  = data.activeStudents;
+    document.getElementById('statTotal').textContent   = data.totalStudents;
+  } catch (err) {
+    console.error('Failed to load stats', err);
+  }
+}
+
+async function loadRegistrations() {
+  const tbody = document.getElementById('regsTbody');
+  try {
+    const res = await API.student('/registrations?limit=50');
+    tbody.innerHTML = '';
+    if (res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No pending applications found.</td></tr>';
+      return;
+    }
+    res.data.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <div style="font-weight:600;">${r.applicant_first_name} ${r.applicant_last_name}</div>
+          <div class="text-xs text-muted">${r.applicant_email}</div>
+          <div class="text-xs text-muted">${r.reference_number}</div>
+        </td>
+        <td>${r.department}</td>
+        <td>${r.course}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${fmtDateTime(r.created_at)}</td>
+        <td>
+          ${r.status === 'submitted' || r.status === 'under_review' ? `
+            <button class="btn btn-sm btn-primary" onclick="approveReg(${r.id})">Approve</button>
+            <button class="btn btn-sm" onclick="rejectReg(${r.id})" style="color:var(--rose)">Reject</button>
+          ` : '—'}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    toast('Failed to load applications', 'error');
+  }
+}
+
+window.approveReg = async (id) => {
+  if (!confirm('Approve this application and convert to student?')) return;
+  try {
+    await API.studentPatch(`/registrations/${id}/approve`);
+    toast('Application approved!');
+    await Promise.all([loadStats(), loadRegistrations()]);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+
+window.rejectReg = async (id) => {
+  const reason = prompt('Reason for rejection:');
+  if (!reason) return;
+  try {
+    await API.studentPatch(`/registrations/${id}/reject`, { reason });
+    toast('Application rejected.');
+    await Promise.all([loadStats(), loadRegistrations()]);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+</script>
+</body>
+</html>

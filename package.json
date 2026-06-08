@@ -1,0 +1,13 @@
+{
+  "name": "sfprs-root",
+  "version": "1.0.0",
+  "description": "SFPRS Root Workspace",
+  "scripts": {
+    "dev:backend": "concurrently -n \"AUTH,FIN,NOTIFY,REPORT,STUDENT\" -c \"bgBlue.bold,bgMagenta.bold,bgGreen.bold,bgYellow.bold,bgCyan.bold\" \"npm run dev --prefix services/auth-service\" \"npm run dev --prefix services/finance-service\" \"npm run dev --prefix services/notification-service\" \"npm run dev --prefix services/report-service\" \"npm run dev --prefix services/student-service\"",
+    "dev:frontend": "node frontend-server.js",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgRed.bold,bgWhite.bold\" \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

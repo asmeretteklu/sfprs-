@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SFPRS — Student Fee Payment & Registration System. Microlink IT College, Mekelle, Tigray.">
+  <title>Login — SFPRS | Microlink IT College</title>
+  <link rel="stylesheet" href="shared/style.css">
+</head>
+<body>
+<main class="auth-page">
+  <!-- Left panel -->
+  <div class="auth-left">
+    <div id="particles-js"></div>
+    <div class="auth-brand fade-up delay-1">
+      <div class="auth-brand-icon">M</div>
+      <h1>Microlink IT College</h1>
+      <p>Student Fee Payment & Registration System</p>
+    </div>
+    <div class="auth-phases">
+      <div class="auth-phase-item done">
+        <div class="auth-phase-dot"></div>
+        <span>Phase 01 · Project Setup Complete</span>
+      </div>
+      <div class="auth-phase-item done">
+        <div class="auth-phase-dot"></div>
+        <span>Phase 02 · Auth & Role System</span>
+      </div>
+      <div class="auth-phase-item done">
+        <div class="auth-phase-dot"></div>
+        <span>Phase 03 · Student Registration</span>
+      </div>
+      <div class="auth-phase-item done">
+        <div class="auth-phase-dot"></div>
+        <span>Phase 04 · Fee Payment Engine</span>
+      </div>
+      <div class="auth-phase-item done">
+        <div class="auth-phase-dot"></div>
+        <span>Phase 05 · Admin Panel & Reports</span>
+      </div>
+      <div class="auth-phase-item done">
+        <div class="auth-phase-dot"></div>
+        <span>Phase 06 · Live at Microlink ✓</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel — Login form -->
+  <div class="auth-right">
+    <div class="auth-form-wrap fade-up">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:24px;">
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="am">አማ</button>
+        </div>
+      </div>
+
+      <h2>
+        <span class="en">Welcome back</span>
+        <span class="am" style="font-family:'Noto Sans Ethiopic',sans-serif;">እንኳን ደህና መጡ</span>
+      </h2>
+      <p class="auth-sub">
+        <span class="en">Sign in to continue to SFPRS</span>
+        <span class="am" style="font-family:'Noto Sans Ethiopic',sans-serif;">ወደ SFPRS ለመቀጠል ይግቡ</span>
+      </p>
+
+      <div id="alertBox" class="alert alert-error" style="display:none">
+        <span>⚠</span>
+        <span id="alertMsg"></span>
+      </div>
+
+      <form id="loginForm" autocomplete="on" novalidate>
+        <div class="form-group fade-up delay-1">
+          <label class="form-label" for="email">
+            <span class="en">Email Address</span>
+            <span class="am">የኢሜይል አድራሻ</span>
+          </label>
+          <input type="email" id="email" name="email" class="form-input"
+            placeholder="you@microlink.edu.et" autocomplete="email" required>
+          <div class="form-error" id="emailErr">Please enter a valid email</div>
+        </div>
+
+        <div class="form-group fade-up delay-2">
+          <label class="form-label" for="password">
+            <span class="en">Password</span>
+            <span class="am">የይለፍ ቃል</span>
+          </label>
+          <input type="password" id="password" name="password" class="form-input"
+            placeholder="••••••••" autocomplete="current-password" required>
+          <div class="form-error" id="passErr">Password is required</div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-primary btn-full btn-lg fade-up delay-3" style="margin-top:8px">
+          <span id="btnText">Sign In</span>
+          <span id="btnSpinner" class="spinner" style="display:none"></span>
+        </button>
+      </form>
+
+      <div style="margin-top:28px;text-align:center">
+        <p class="text-sm" style="color:var(--text-muted)">
+          Not a staff member? <a href="student/register.html" style="color:var(--rose)">Apply for admission →</a>
+        </p>
+        <p class="text-xs" style="color:var(--text-muted);margin-top:16px;">
+          SFPRS v1.0 · Microlink IT College · Mekelle, Tigray<br>Director: Asmeret · 2025
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="shared/auth.js"></script>
+<script src="shared/api.js"></script>
+<script>
+(function() {
+  // If already logged in, redirect
+  const user = AUTH.getUser();
+  if (user) { window.location.href = AUTH.roleHomepage(user.role); return; }
+
+  const form      = document.getElementById('loginForm');
+  const emailEl   = document.getElementById('email');
+  const passEl    = document.getElementById('password');
+  const btnText   = document.getElementById('btnText');
+  const btnSpinner= document.getElementById('btnSpinner');
+  const alertBox  = document.getElementById('alertBox');
+  const alertMsg  = document.getElementById('alertMsg');
+
+  function showAlert(msg) {
+    alertMsg.textContent = msg;
+    alertBox.style.display = 'flex';
+  }
+  function hideAlert() { alertBox.style.display = 'none'; }
+
+  function setLoading(v) {
+    btnText.textContent = v ? 'Signing in...' : 'Sign In';
+    btnSpinner.style.display = v ? 'inline-block' : 'none';
+    document.getElementById('submitBtn').disabled = v;
+  }
+
+  function validate() {
+    let ok = true;
+    document.querySelectorAll('.form-group').forEach(g => g.classList.remove('has-error'));
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim())) {
+      emailEl.closest('.form-group').classList.add('has-error');
+      ok = false;
+    }
+    if (passEl.value.length < 1) {
+      passEl.closest('.form-group').classList.add('has-error');
+      ok = false;
+    }
+    return ok;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert();
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const data = await AUTH.login(emailEl.value.trim(), passEl.value);
+      window.location.href = AUTH.roleHomepage(data.user.role);
+    } catch (err) {
+      showAlert(err.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  });
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+  if (window.particlesJS) {
+    particlesJS('particles-js', {
+      "particles": {
+        "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+        "color": { "value": "#ED809D" },
+        "shape": { "type": "circle" },
+        "opacity": { "value": 0.5, "random": false },
+        "size": { "value": 3, "random": true },
+        "line_linked": { "enable": true, "distance": 150, "color": "#ED809D", "opacity": 0.4, "width": 1 },
+        "move": { "enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {
+          "onhover": { "enable": true, "mode": "grab" },
+          "onclick": { "enable": true, "mode": "push" },
+          "resize": true
+        },
+        "modes": {
+          "grab": { "distance": 140, "line_linked": { "opacity": 1 } },
+          "push": { "particles_nb": 4 }
+        }
+      },
+      "retina_detect": true
+    });
+  }
+</script>
+</body>
+</html>

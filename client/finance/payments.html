@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record Payment — SFPRS Finance</title>
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">M</div>
+        <div class="logo-text"><strong>SFPRS</strong><span>Finance Office</span></div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Finance Portal</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="dashboard.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item active" href="payments.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Record Payment</a>
+      <a class="nav-item" href="ledger.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V8z"/></svg>Ledger</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info"><strong class="user-name">—</strong><span class="user-role">Finance Officer</span></div>
+        <button id="logoutBtn" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h2>Record Payment</h2>
+        <p class="text-muted text-sm">Search student → select fee → record payment</p>
+      </div>
+    </header>
+
+    <div class="page-content fade-up">
+      <div class="grid-2 gap-4">
+        <!-- Student Search -->
+        <div>
+          <div class="card mb-4">
+            <div class="card-title mb-4">Search Student</div>
+            <div class="search-bar mb-4">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="studentSearch" placeholder="Student ID or name..." oninput="searchStudents()">
+            </div>
+            <div id="searchResults"></div>
+          </div>
+
+          <!-- Selected student info -->
+          <div class="card" id="studentCard" style="display:none">
+            <div class="card-title mb-4">Student Profile</div>
+            <div id="studentInfo"></div>
+            <hr class="divider">
+            <div class="card-title mb-3" style="font-size:0.875rem">Outstanding Fees</div>
+            <div id="studentFees"></div>
+          </div>
+        </div>
+
+        <!-- Payment form -->
+        <div class="card" id="payForm" style="display:none;align-self:start">
+          <div class="card-title mb-4">Payment Details</div>
+          <div id="selectedFeeBox" style="background:var(--bg-surface);padding:14px;border-radius:8px;margin-bottom:20px;border:1px solid var(--border)"></div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Method *</label>
+            <select id="payMethod" class="form-select">
+              <option value="cash">Cash</option>
+              <option value="bank_transfer">Bank Transfer</option>
+              <option value="mobile_money">Mobile Money (TeleBirr)</option>
+              <option value="cheque">Cheque</option>
+            </select>
+          </div>
+          <div class="form-group" id="bankRefWrap" style="display:none">
+            <label class="form-label">Bank / Transaction Reference</label>
+            <input type="text" id="bankRef" class="form-input" placeholder="e.g. TRX2025XXXXXX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount (ETB) *</label>
+            <input type="number" id="payAmount" class="form-input" placeholder="0.00" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <textarea id="payNotes" class="form-textarea" placeholder="Optional officer notes..."></textarea>
+          </div>
+
+          <div id="payAlert" class="alert" style="display:none;margin-bottom:12px"></div>
+
+          <button class="btn btn-success btn-full btn-lg" id="recordBtn" onclick="recordPayment()">
+            <span id="recordText">Record & Generate Receipt</span>
+            <span id="recordSpinner" class="spinner" style="display:none"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Success receipt display -->
+      <div class="card mt-4" id="receiptCard" style="display:none">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="font-size:2rem">✅</div>
+          <div>
+            <div class="card-title">Payment Recorded!</div>
+            <div class="text-sm text-muted">Receipt generated and ready to print.</div>
+          </div>
+        </div>
+        <div id="receiptInfo" style="margin-top:16px"></div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button id="printReceiptBtn" class="btn btn-primary" onclick="printReceipt()">⬇ Download PDF</button>
+          <button class="btn btn-ghost" onclick="resetForm()">Record Another</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/auth.js"></script>
+<script src="../shared/api.js"></script>
+<script>
+if (!AUTH.requireRole('finance_officer', 'super_admin')) void 0;
+AUTH.injectSidebarUser();
+
+let selectedStudent = null;
+let selectedFee     = null;
+let lastPaymentData = null;
+let searchTimer     = null;
+
+document.getElementById('payMethod').addEventListener('change', function() {
+  document.getElementById('bankRefWrap').style.display =
+    ['bank_transfer','mobile_money'].includes(this.value) ? 'block' : 'none';
+});
+
+function searchStudents() {
+  clearTimeout(searchTimer);
+  const q = document.getElementById('studentSearch').value.trim();
+  if (q.length < 2) { document.getElementById('searchResults').innerHTML = ''; return; }
+  searchTimer = setTimeout(() => doSearch(q), 350);
+}
+
+async function doSearch(q) {
+  const el = document.getElementById('searchResults');
+  el.innerHTML = '<div class="spinner" style="margin:12px auto;display:block"></div>';
+  try {
+    const data = await API.student(`/list?search=${encodeURIComponent(q)}&limit=8`);
+    if (!data.data?.length) {
+      el.innerHTML = '<div class="text-sm text-muted">No students found.</div>';
+      return;
+    }
+    el.innerHTML = data.data.map(s => `
+      <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:6px;transition:all 0.15s"
+           onmouseover="this.style.borderColor='var(--rose)'" onmouseout="this.style.borderColor='var(--border)'"
+           onclick="selectStudent('${s.id}')">
+        <div style="font-weight:600;font-size:0.875rem">${s.first_name} ${s.last_name}</div>
+        <div class="text-xs text-muted">${s.student_id_number} · ${s.department}</div>
+      </div>
+    `).join('');
+  } catch (err) {
+    el.innerHTML = `<div class="alert alert-error text-sm">${err.message}</div>`;
+  }
+}
+
+async function selectStudent(id) {
+  document.getElementById('searchResults').innerHTML = '';
+  document.getElementById('studentSearch').value = '';
+  const card   = document.getElementById('studentCard');
+  const infoEl = document.getElementById('studentInfo');
+  const feesEl = document.getElementById('studentFees');
+  card.style.display = 'block';
+  infoEl.innerHTML = '<div class="shimmer" style="height:60px;border-radius:6px"></div>';
+  feesEl.innerHTML = '<div class="shimmer" style="height:40px;border-radius:6px;margin-top:8px"></div>';
+
+  try {
+    const data = await API.finance(`/fees/${id}`);
+    selectedStudent = data.student;
+    infoEl.innerHTML = `
+      <div class="text-sm" style="line-height:2">
+        <strong>${data.student.name}</strong><br>
+        <span class="text-muted">ID: ${data.student.studentIdNumber}</span><br>
+        ${statusBadge(data.student.enrollmentStatus)}
+        ${data.student.semesterBlocked ? '<span class="badge badge-overdue" style="margin-left:4px">⚠ Blocked</span>' : ''}
+      </div>
+    `;
+
+    const unpaid = data.feeSchedules.filter(f => !f.paid);
+    if (!unpaid.length) {
+      feesEl.innerHTML = '<div class="text-sm text-muted" style="padding:8px 0">All fees paid ✓</div>';
+    } else {
+      feesEl.innerHTML = unpaid.map(f => `
+        <div style="padding:10px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;margin-bottom:6px;transition:all 0.15s"
+             onmouseover="this.style.borderColor='var(--mustard)'" onmouseout="this.style.borderColor='var(--border)'"
+             onclick="selectFee('${f.id}','${f.name.replace(/'/g,"\\'")}','${f.amount}','${f.semester}')">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-weight:500;font-size:0.8rem">${f.name}</div>
+              <div class="text-xs text-muted">Sem ${f.semester} · Due ${fmtDate(f.due_date)}</div>
+            </div>
+            <div style="font-weight:700;color:${f.overdue?'var(--persian)':'var(--text-primary)'}">ETB ${parseFloat(f.amount).toLocaleString()}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    infoEl.innerHTML = `<div class="alert alert-error">${err.message}</div>`;
+  }
+}
+
+function selectFee(id, name, amount, semester) {
+  selectedFee = { id, name, amount, semester };
+  document.getElementById('selectedFeeBox').innerHTML = `
+    <div style="font-weight:700">${name}</div>
+    <div class="text-sm text-muted">Semester ${semester}</div>
+    <div style="font-size:1.1rem;font-weight:800;color:var(--mustard);margin-top:4px">ETB ${parseFloat(amount).toLocaleString('en-ET', { minimumFractionDigits: 2 })}</div>
+  `;
+  document.getElementById('payAmount').value = parseFloat(amount).toFixed(2);
+  document.getElementById('payForm').style.display = 'block';
+  document.getElementById('payForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function recordPayment() {
+  if (!selectedStudent || !selectedFee) { toast('Please select a student and fee', 'error'); return; }
+  const btn    = document.getElementById('recordBtn');
+  const text   = document.getElementById('recordText');
+  const spinner= document.getElementById('recordSpinner');
+  const alertEl= document.getElementById('payAlert');
+
+  text.style.display = 'none';
+  spinner.style.display = 'inline-block';
+  btn.disabled = true;
+  alertEl.style.display = 'none';
+
+  try {
+    const data = await API.financePost('/payments', {
+      studentId:     selectedStudent.id,
+      feeScheduleId: selectedFee.id,
+      amountPaid:    parseFloat(document.getElementById('payAmount').value),
+      paymentMethod: document.getElementById('payMethod').value,
+      bankReference: document.getElementById('bankRef').value || null,
+      semester:      selectedFee.semester,
+      notes:         document.getElementById('payNotes').value,
+    });
+    lastPaymentData = data;
+    document.getElementById('receiptCard').style.display = 'block';
+    document.getElementById('receiptInfo').innerHTML = `
+      <div class="ref-number">${data.receiptNumber}</div>
+      <div class="text-sm text-muted" style="margin-top:8px">
+        Student: <strong>${selectedStudent.name}</strong> · 
+        Fee: <strong>${selectedFee.name}</strong>
+      </div>
+    `;
+    document.getElementById('receiptCard').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('payForm').style.display = 'none';
+    toast(`Receipt ${data.receiptNumber} generated`, 'success');
+    // Refresh fees
+    selectStudent(selectedStudent.id);
+  } catch (err) {
+    alertEl.className = 'alert alert-error';
+    alertEl.innerHTML = `<span>⚠</span><span>${err.message}</span>`;
+    alertEl.style.display = 'flex';
+    text.style.display = 'inline';
+    spinner.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+function printReceipt() {
+  if (!lastPaymentData?.paymentId) return;
+  downloadFile(
+    `${SERVICES.finance}/api/finance/receipts/${lastPaymentData.paymentId}/download`,
+    `${lastPaymentData.receiptNumber}.pdf`
+  );
+}
+
+function resetForm() {
+  selectedStudent = null;
+  selectedFee     = null;
+  lastPaymentData = null;
+  document.getElementById('studentCard').style.display  = 'none';
+  document.getElementById('payForm').style.display      = 'none';
+  document.getElementById('receiptCard').style.display  = 'none';
+  document.getElementById('studentSearch').value        = '';
+}
+</script>
+</body>
+</html>

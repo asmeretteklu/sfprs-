@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction Ledger — SFPRS Finance</title>
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge"><div class="logo-icon">M</div><div class="logo-text"><strong>SFPRS</strong><span>Finance Office</span></div></div>
+    </div>
+    <div class="sidebar-section-label">Finance Portal</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="dashboard.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item" href="payments.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Record Payment</a>
+      <a class="nav-item active" href="ledger.html"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V8z"/></svg>Ledger</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip"><div class="user-avatar" id="userAvatar">?</div><div class="user-info"><strong class="user-name">—</strong><span class="user-role">Finance Officer</span></div><button id="logoutBtn" title="Sign out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title"><h2>Transaction Ledger</h2><p class="text-muted text-sm">Full payment history with filters and CSV export</p></div>
+      <div class="topbar-actions">
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </header>
+
+    <div class="page-content fade-up">
+      <!-- Filters -->
+      <div class="card mb-4">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-group" style="margin:0;flex:1;min-width:140px">
+            <label class="form-label">Start Date</label>
+            <input type="date" id="startDate" class="form-input">
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:140px">
+            <label class="form-label">End Date</label>
+            <input type="date" id="endDate" class="form-input">
+          </div>
+          <div class="form-group" style="margin:0;flex:1;min-width:140px">
+            <label class="form-label">Fee Type</label>
+            <select id="feeType" class="form-select">
+              <option value="">All Types</option>
+              <option value="tuition">Tuition</option>
+              <option value="registration">Registration</option>
+              <option value="library">Library</option>
+              <option value="lab">Lab</option>
+              <option value="id_card">ID Card</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div style="margin-bottom:18px">
+            <button class="btn btn-primary" onclick="loadLedger()">Filter</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">All Transactions</div>
+            <div class="card-subtitle" id="ledgerSummary">—</div>
+          </div>
+          <div class="search-bar" style="width:200px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="ledgerSearch" placeholder="Search...">
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Receipt</th>
+                <th>Student</th>
+                <th>Fee</th>
+                <th>Amount (ETB)</th>
+                <th>Method</th>
+                <th>Officer</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody">
+              <tr><td colspan="8"><div class="shimmer" style="height:44px;border-radius:4px"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination" id="ledgerPagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/auth.js"></script>
+<script src="../shared/api.js"></script>
+<script>
+if (!AUTH.requireRole('finance_officer', 'super_admin')) void 0;
+AUTH.injectSidebarUser();
+
+let allData = [];
+let currentPage = 1;
+const PAGE = 20;
+
+async function loadLedger() {
+  const params = new URLSearchParams();
+  if (document.getElementById('startDate').value) params.set('startDate', document.getElementById('startDate').value);
+  if (document.getElementById('endDate').value)   params.set('endDate',   document.getElementById('endDate').value);
+  if (document.getElementById('feeType').value)   params.set('feeType',   document.getElementById('feeType').value);
+  params.set('limit', '200');
+
+  document.getElementById('ledgerBody').innerHTML = '<tr><td colspan="8"><div class="shimmer" style="height:44px;border-radius:4px"></div></td></tr>';
+  try {
+    const data = await API.finance(`/ledger?${params}`);
+    allData = data.data || [];
+    document.getElementById('ledgerSummary').textContent =
+      `${data.total} transactions · Grand Total: ${fmtCurrency(data.grandTotal)}`;
+    currentPage = 1;
+    render();
+  } catch (err) {
+    document.getElementById('ledgerBody').innerHTML = `<tr><td colspan="8"><div class="alert alert-error">${err.message}</div></td></tr>`;
+  }
+}
+
+function render() {
+  const q = document.getElementById('ledgerSearch').value.toLowerCase();
+  const filtered = allData.filter(r =>
+    !q || r.student_id_number?.toLowerCase().includes(q) ||
+    r.first_name?.toLowerCase().includes(q) ||
+    r.receipt_number?.toLowerCase().includes(q)
+  );
+  const totalPages = Math.ceil(filtered.length / PAGE);
+  const slice      = filtered.slice((currentPage-1)*PAGE, currentPage*PAGE);
+
+  const tbody = document.getElementById('ledgerBody');
+  tbody.innerHTML = slice.map(r => `
+    <tr>
+      <td class="text-sm">${fmtDateTime(r.payment_date)}</td>
+      <td class="td-mono" style="color:var(--mustard)">${r.receipt_number || '—'}</td>
+      <td>
+        <div class="td-primary">${r.first_name} ${r.last_name}</div>
+        <div class="text-xs text-muted">${r.student_id_number}</div>
+      </td>
+      <td>
+        <div style="font-size:0.82rem">${r.fee_name}</div>
+        <span class="badge badge-pending" style="font-size:0.65rem">${r.fee_type}</span>
+      </td>
+      <td style="font-weight:700;color:var(--mint)">${fmtCurrency(r.amount_paid)}</td>
+      <td class="text-sm">${(r.payment_method||'').replace(/_/g,' ').toUpperCase()}</td>
+      <td class="text-sm">${r.officer_first||''} ${r.officer_last||''}</td>
+      <td>
+        ${r.receipt_number ? `<button class="btn btn-ghost btn-sm" onclick="downloadFile('${SERVICES.finance}/api/finance/receipts/${r.id}/download','${r.receipt_number}.pdf')">⬇</button>` : ''}
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📋</div><h3>No records</h3></div></td></tr>`;
+
+  // Pagination
+  const pag = document.getElementById('ledgerPagination');
+  pag.innerHTML = '';
+  for (let p = 1; p <= Math.min(totalPages, 20); p++) {
+    const btn = document.createElement('button');
+    btn.className = `page-btn${p === currentPage ? ' active' : ''}`;
+    btn.textContent = p;
+    btn.onclick = () => { currentPage = p; render(); };
+    pag.appendChild(btn);
+  }
+}
+
+document.getElementById('ledgerSearch').addEventListener('input', () => { currentPage = 1; render(); });
+
+async function exportCSV() {
+  const params = new URLSearchParams();
+  if (document.getElementById('startDate').value) params.set('startDate', document.getElementById('startDate').value);
+  if (document.getElementById('endDate').value)   params.set('endDate',   document.getElementById('endDate').value);
+  if (document.getElementById('feeType').value)   params.set('feeType',   document.getElementById('feeType').value);
+  await downloadFile(`${SERVICES.report}/api/reports/financial/csv?${params}`, `ledger-${Date.now()}.csv`);
+}
+
+// Set default dates
+const today = new Date().toISOString().slice(0,10);
+const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0,10);
+document.getElementById('startDate').value = monthStart;
+document.getElementById('endDate').value   = today;
+
+loadLedger();
+</script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Student dashboard — SFPRS Microlink IT College">
+  <title>My Dashboard — SFPRS Student Portal</title>
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">M</div>
+        <div class="logo-text">
+          <strong>SFPRS</strong>
+          <span>Microlink IT College</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-label">Student Portal</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="index.html" id="nav-dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span class="en">Dashboard</span><span class="am">ዳሽቦርድ</span>
+      </a>
+      <a class="nav-item" href="register.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        <span class="en">Registration</span><span class="am">ምዝገባ</span>
+      </a>
+      <a class="nav-item" href="pay.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <span class="en">Pay Fees</span><span class="am">ክፍያ</span>
+      </a>
+      <a class="nav-item" href="receipts.html">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V8z"/></svg>
+        <span class="en">Receipts</span><span class="am">ደረሰኞች</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <strong class="user-name" id="userName">Loading...</strong>
+          <span class="user-role" id="userRole">Student</span>
+        </div>
+        <button id="logoutBtn" title="Sign out">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h2 class="en">My Dashboard</h2>
+        <h2 class="am" style="display:none">የእኔ ዳሽቦርድ</h2>
+        <p class="text-muted text-sm" id="academicYearLabel">Academic Year 2025/2026</p>
+      </div>
+      <div class="topbar-actions">
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="am">አማ</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content fade-up">
+      <!-- Status Banner -->
+      <div id="statusBanner" class="alert alert-info mb-6" style="display:none"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid mb-6" id="statsGrid">
+        <div class="stat-card rose">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Total Outstanding</div>
+          <div class="stat-value" id="totalDue">—</div>
+          <div class="stat-meta">ETB · this semester</div>
+        </div>
+        <div class="stat-card mustard">
+          <div class="stat-icon">✅</div>
+          <div class="stat-label">Total Paid</div>
+          <div class="stat-value" id="totalPaid">—</div>
+          <div class="stat-meta">ETB · cumulative</div>
+        </div>
+        <div class="stat-card mint">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">Current Semester</div>
+          <div class="stat-value" id="currentSem">—</div>
+          <div class="stat-meta">Academic progress</div>
+        </div>
+        <div class="stat-card persian">
+          <div class="stat-icon">📋</div>
+          <div class="stat-label">Enrollment Status</div>
+          <div class="stat-value" id="enrollStatus" style="font-size:1.1rem">—</div>
+          <div class="stat-meta">Registration state</div>
+        </div>
+      </div>
+
+      <div class="grid-2 gap-4">
+        <!-- Fee schedule card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <span class="en">My Fee Schedule</span>
+                <span class="am">የክፍያ መርሃ ግብር</span>
+              </div>
+              <div class="card-subtitle">Current academic year</div>
+            </div>
+            <a href="pay.html" class="btn btn-primary btn-sm">
+              <span class="en">Pay Now</span>
+              <span class="am">አሁን ይክፈሉ</span>
+            </a>
+          </div>
+          <div id="feeList">
+            <div class="shimmer" style="height:60px;margin-bottom:8px"></div>
+            <div class="shimmer" style="height:60px;margin-bottom:8px"></div>
+            <div class="shimmer" style="height:60px"></div>
+          </div>
+        </div>
+
+        <!-- Quick actions + recent receipts -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- Quick actions -->
+          <div class="card">
+            <div class="card-title mb-4">
+              <span class="en">Quick Actions</span>
+              <span class="am">ፈጣን ድርጊቶች</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <a href="pay.html" class="btn btn-primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                Pay Fees
+              </a>
+              <a href="receipts.html" class="btn btn-ghost">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16l4-2 4 2 4-2 4 2V8z"/></svg>
+                Receipts
+              </a>
+              <a href="register.html" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+                Application
+              </a>
+              <a href="register.html#track" class="btn btn-ghost">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Track App
+              </a>
+            </div>
+          </div>
+
+          <!-- Recent receipts -->
+          <div class="card" style="flex:1">
+            <div class="card-header">
+              <div class="card-title">
+                <span class="en">Recent Receipts</span>
+                <span class="am">የቅርብ ደረሰኞች</span>
+              </div>
+              <a href="receipts.html" class="btn btn-ghost btn-sm">View all</a>
+            </div>
+            <div id="recentReceipts">
+              <div class="shimmer" style="height:44px;margin-bottom:6px"></div>
+              <div class="shimmer" style="height:44px;margin-bottom:6px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/auth.js"></script>
+<script src="../shared/api.js"></script>
+<script>
+(function() {
+  if (!AUTH.requireRole('student')) return;
+  AUTH.injectSidebarUser();
+  LANG.init();
+
+  const user = AUTH.getUser();
+
+  async function loadDashboard() {
+    try {
+      const data = await API.finance(`/fees/${user.id}`);
+      const s = data.student;
+      const summary = data.summary;
+
+      // Stats
+      document.getElementById('totalDue').textContent   = fmtCurrency(summary.balance);
+      document.getElementById('totalPaid').textContent  = fmtCurrency(summary.totalPaid);
+      document.getElementById('currentSem').textContent = `Sem ${s.semesterBlocked ? '⚠' : ''}${1}`;
+      document.getElementById('enrollStatus').innerHTML = statusBadge(s.enrollmentStatus);
+
+      // Block banner
+      if (s.semesterBlocked) {
+        const banner = document.getElementById('statusBanner');
+        banner.className = 'alert alert-warning mb-6';
+        banner.innerHTML = '⚠ <strong>Enrollment Block:</strong> You have overdue mandatory fees. Please settle your balance before the next semester registration.';
+        banner.style.display = 'flex';
+      }
+
+      // Fee list
+      const feeList = document.getElementById('feeList');
+      if (!data.feeSchedules.length) {
+        feeList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No fees found</h3></div>';
+      } else {
+        feeList.innerHTML = data.feeSchedules.map(f => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-weight:500;font-size:0.875rem">${f.name}</div>
+              <div class="text-xs text-muted">Due ${fmtDate(f.due_date)} · Sem ${f.semester}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-weight:700;font-size:0.9rem;color:${f.paid?'var(--mint)':f.overdue?'var(--persian)':'var(--text-primary)'}">${fmtCurrency(f.amount)}</div>
+              ${statusBadge(f.paid ? 'completed' : f.overdue ? 'overdue' : 'pending')}
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch (err) {
+      document.getElementById('feeList').innerHTML = `<div class="alert alert-error">Could not load fees: ${err.message}</div>`;
+    }
+  }
+
+  async function loadReceipts() {
+    try {
+      const data = await API.finance(`/receipts?studentId=${user.id}&limit=3`);
+      const el = document.getElementById('recentReceipts');
+      if (!data.data?.length) {
+        el.innerHTML = '<div class="text-sm text-muted" style="padding:12px 0">No receipts yet.</div>';
+      } else {
+        el.innerHTML = data.data.map(r => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div class="font-mono text-xs" style="color:var(--mustard)">${r.receipt_number}</div>
+              <div class="text-xs text-muted">${fmtDate(r.payment_date)}</div>
+            </div>
+            <div style="font-weight:600;color:var(--mint);font-size:0.85rem">${fmtCurrency(r.amount_paid)}</div>
+          </div>
+        `).join('');
+      }
+    } catch {}
+  }
+
+  loadDashboard();
+  loadReceipts();
+})();
+</script>
+</body>
+</html>

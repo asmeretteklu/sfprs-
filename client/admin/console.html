@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Console — SFPRS</title>
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">M</div>
+        <div class="logo-text">
+          <strong>Microlink IT</strong>
+          <span>Super Admin</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Management</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Users & Roles
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        System Logs
+      </a>
+      <a href="#" class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        Settings
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <strong class="user-name">Loading...</strong>
+          <span class="user-role">Super Admin</span>
+        </div>
+        <button id="logoutBtn" title="Logout">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="top-header">
+      <div class="header-title">
+        <h2 id="greeting">Welcome</h2>
+        <p class="text-sm text-muted">Manage system users and access control.</p>
+      </div>
+    </header>
+
+    <div class="content-body fade-up delay-1">
+      <div class="panel">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+          <h3>User Directory</h3>
+          <button class="btn btn-primary" onclick="openCreateUserModal()">+ Add User</button>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody">
+              <tr>
+                <td colspan="5">
+                  <div class="skeleton skeleton-text"></div>
+                  <div class="skeleton skeleton-text"></div>
+                  <div class="skeleton skeleton-text"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Create User -->
+<div id="createUserModal" class="modal" style="display:none;">
+  <div class="modal-content fade-up" style="max-width: 500px;">
+    <h3>Create New User</h3>
+    <form id="createUserForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" id="c_firstName" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" id="c_lastName" class="form-input" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" id="c_email" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select id="c_role" class="form-select" required>
+          <option value="student">Student</option>
+          <option value="finance_officer">Finance Officer</option>
+          <option value="registrar">Registrar</option>
+          <option value="super_admin">Super Admin</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Temporary Password</label>
+        <input type="password" id="c_password" class="form-input" required>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+        <button type="button" class="btn" onclick="document.getElementById('createUserModal').style.display='none'">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create User</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../shared/auth.js"></script>
+<script src="../shared/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!AUTH.requireRole('super_admin')) return;
+  AUTH.injectSidebarUser();
+  document.getElementById('greeting').textContent = AUTH.getGreeting();
+
+  await loadUsers();
+
+  document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        firstName: document.getElementById('c_firstName').value,
+        lastName:  document.getElementById('c_lastName').value,
+        email:     document.getElementById('c_email').value,
+        role:      document.getElementById('c_role').value,
+        password:  document.getElementById('c_password').value
+      };
+      await API.authPost('/users', payload);
+      toast('User created successfully');
+      document.getElementById('createUserModal').style.display = 'none';
+      e.target.reset();
+      loadUsers();
+    } catch (err) {
+      toast(err.message, 'error');
+    }
+  });
+});
+
+async function loadUsers() {
+  const tbody = document.getElementById('usersTbody');
+  try {
+    const res = await API.auth('/users');
+    tbody.innerHTML = '';
+    res.data.forEach(u => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${u.first_name} ${u.last_name}</td>
+        <td>${u.email}</td>
+        <td><span class="badge badge-info">${u.role.replace('_', ' ')}</span></td>
+        <td><span class="badge ${u.is_active ? 'badge-active' : 'badge-suspended'}">${u.is_active ? 'Active' : 'Suspended'}</span></td>
+        <td>
+          <button class="btn btn-sm" onclick="toggleUser(${u.id}, ${!u.is_active})">${u.is_active ? 'Suspend' : 'Activate'}</button>
+          ${u.locked_until ? `<button class="btn btn-sm" onclick="unlockUser(${u.id})">Unlock</button>` : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    toast('Failed to load users', 'error');
+  }
+}
+
+window.openCreateUserModal = () => { document.getElementById('createUserModal').style.display = 'flex'; };
+window.toggleUser = async (id, activate) => {
+  if (!confirm(`Are you sure you want to ${activate ? 'activate' : 'suspend'} this user?`)) return;
+  try {
+    await API.authPost(`/users/${id}/toggle`, { active: activate });
+    toast(`User ${activate ? 'activated' : 'suspended'}`);
+    loadUsers();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+window.unlockUser = async (id) => {
+  if (!confirm('Unlock this user account?')) return;
+  try {
+    await API.authPost(`/users/${id}/unlock`);
+    toast('User unlocked');
+    loadUsers();
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+};
+</script>
+</body>
+</html>
