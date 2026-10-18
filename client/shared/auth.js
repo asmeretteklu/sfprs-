@@ -3,7 +3,7 @@
 // Microlink IT College
 // ============================================================
 
-const API_BASE = window.SFPRS_API_BASE || 'http://localhost';
+const AUTH_API_BASE = window.SFPRS_API_BASE || 'http://localhost';
 
 const AUTH = {
   // ── Token storage (sessionStorage as fallback to cookies) ──
@@ -21,7 +21,7 @@ const AUTH = {
 
   // ── Login ─────────────────────────────────────────────────
   async login(email, password) {
-    const res = await fetch(`${API_BASE}:3001/auth/login`, {
+    const res = await fetch(`${AUTH_API_BASE}:3001/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -36,7 +36,7 @@ const AUTH = {
   // ── Logout ────────────────────────────────────────────────
   async logout() {
     try {
-      await fetch(`${API_BASE}:3001/auth/logout`, {
+      await fetch(`${AUTH_API_BASE}:3001/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -47,7 +47,7 @@ const AUTH = {
 
   // ── Refresh token ─────────────────────────────────────────
   async refresh() {
-    const res = await fetch(`${API_BASE}:3001/auth/refresh`, {
+    const res = await fetch(`${AUTH_API_BASE}:3001/auth/refresh`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -60,7 +60,7 @@ const AUTH = {
 
   // ── Get current user from /auth/me ────────────────────────
   async me() {
-    const res = await fetch(`${API_BASE}:3001/auth/me`, { credentials: 'include' });
+    const res = await fetch(`${AUTH_API_BASE}:3001/auth/me`, { credentials: 'include' });
     if (!res.ok) return null;
     const data = await res.json();
     AUTH.setUser(data);
@@ -84,7 +84,7 @@ const AUTH = {
   roleHomepage(role) {
     const map = {
       super_admin:     '/client/admin/console.html',
-      finance_officer: '/client/finance/dashboard.html',
+      finance_officer: '/client/finance/index.html',
       registrar:       '/client/registrar/approvals.html',
       student:         '/client/student/index.html',
     };

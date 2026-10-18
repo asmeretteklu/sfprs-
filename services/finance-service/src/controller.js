@@ -315,7 +315,12 @@ async function getReceipt(req, res) {
       [req.params.paymentId, req.params.paymentId]
     );
     if (!rows.length) return res.status(404).json({ error: 'ReceiptNotFound' });
-    return res.json(rows[0]);
+    const receipt = rows[0];
+    // Students can only view their own receipts
+    if (req.user.role === 'student' && req.user.id !== receipt.student_id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    return res.json(receipt);
   } catch (err) {
     console.error('[getReceipt]', err);
     return res.status(500).json({ error: 'InternalError' });
@@ -329,15 +334,57 @@ async function downloadReceipt(req, res) {
   const db = getPool();
   try {
     const [rows] = await db.execute(
-      `SELECT receipt_number, pdf_url FROM receipts WHERE (payment_id = ? OR receipt_number = ?) AND voided = 0`,
+      `SELECT r.receipt_number, r.student_id, r.pdf_url FROM receipts
+       WHERE (payment_id = ? OR receipt_number = ?) AND voided = 0`,
       [req.params.paymentId, req.params.paymentId]
     );
     if (!rows.length) return res.status(404).json({ error: 'ReceiptNotFound' });
+    // Students can only download their own receipts
+    if (req.user.role === 'student' && req.user.id !== rows[0].student_id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     const pdfPath = path.join(__dirname, '..', 'receipts', `${rows[0].receipt_number}.pdf`);
     if (!fs.existsSync(pdfPath)) return res.status(404).json({ error: 'PDFNotFound' });
     res.download(pdfPath, `${rows[0].receipt_number}.pdf`);
   } catch (err) {
     console.error('[downloadReceipt]', err);
+    return res.status(500).json({ error: 'InternalError' });
+  }
+}
+
+// ============================================================
+// GET /api/finance/receipts  — list receipts by studentId (student dashboard)
+// ============================================================
+async function listReceipts(req, res) {
+  const { studentId, limit = 10, page = 1 } = req.query;
+  // Students can only list their own receipts
+  if (req.user.role === 'student' && req.user.id !== studentId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  if (!studentId) return res.status(400).json({ error: 'studentId query param required' });
+
+  const safeLimit  = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
+  const safeOffset = Math.max((Math.max(parseInt(page) || 1, 1) - 1) * safeLimit, 0);
+  const db = getPool();
+  try {
+    const [rows] = await db.execute(
+      `SELECT r.id, r.receipt_number, r.issued_at, r.pdf_url,
+              p.amount_paid, p.payment_date, p.payment_method,
+              fs.name AS fee_name
+       FROM   receipts r
+       JOIN   payments p ON p.id = r.payment_id
+       JOIN   fee_schedules fs ON fs.id = p.fee_schedule_id
+       WHERE  r.student_id = ? AND r.voided = 0
+       ORDER BY r.issued_at DESC
+       LIMIT ? OFFSET ?`,
+      [studentId, safeLimit, safeOffset]
+    );
+    const [[{ total }]] = await db.execute(
+      `SELECT COUNT(*) AS total FROM receipts WHERE student_id = ? AND voided = 0`, [studentId]
+    );
+    return res.json({ data: rows, total });
+  } catch (err) {
+    console.error('[listReceipts]', err);
     return res.status(500).json({ error: 'InternalError' });
   }
 }
@@ -521,6 +568,6 @@ async function createFeeSchedule(req, res) {
 
 module.exports = {
   getStudentFees, recordPayment, listPayments, getPayment,
-  getReceipt, downloadReceipt, getDashboard, getOverdue, getLedger,
+  getReceipt, downloadReceipt, listReceipts, getDashboard, getOverdue, getLedger,
   listFeeSchedules, createFeeSchedule,
 };

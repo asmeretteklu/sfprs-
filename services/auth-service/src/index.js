@@ -86,8 +86,20 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`[auth-service] Running on port ${PORT}`);
 });
+
+// Graceful shutdown
+function shutdown(signal) {
+  console.log(`[auth-service] ${signal} received — shutting down gracefully`);
+  server.close(() => {
+    console.log('[auth-service] HTTP server closed.');
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10000); // force exit after 10 s
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
 
 module.exports = app;

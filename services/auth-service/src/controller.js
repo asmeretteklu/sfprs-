@@ -11,11 +11,16 @@ const mysql   = require('mysql2/promise');
 const { validationResult } = require('express-validator');
 const crypto  = require('crypto');
 
-const JWT_SECRET         = process.env.JWT_SECRET         || 'CHANGE_ME_IN_PRODUCTION';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'CHANGE_REFRESH_ME_IN_PRODUCTION';
+// ── Guard: crash loudly on missing secrets ─────────────────────
+if (!process.env.JWT_SECRET)         throw new Error('[auth-service] JWT_SECRET env var is required');
+if (!process.env.JWT_REFRESH_SECRET) throw new Error('[auth-service] JWT_REFRESH_SECRET env var is required');
+
+const JWT_SECRET         = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const ACCESS_EXPIRES     = '15m';
 const REFRESH_EXPIRES    = '7d';
 const BCRYPT_ROUNDS      = 12;
+const BCRYPT_ROUNDS_FAST = 10; // for refresh token hashing (hot path)
 const LOCKOUT_THRESHOLD  = parseInt(process.env.ACCOUNT_LOCKOUT_THRESHOLD) || 5;
 const LOCKOUT_DURATION   = parseInt(process.env.ACCOUNT_LOCKOUT_DURATION_MS) || 30 * 60 * 1000;
 
@@ -165,7 +170,7 @@ async function login(req, res) {
     // Successful login — reset lockout counters
     const accessToken  = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user.id);
-    const refreshHash  = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
+    const refreshHash  = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS_FAST);
 
     await db.execute(
       `UPDATE users SET refresh_token = ?, failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW() WHERE id = ?`,
@@ -232,7 +237,7 @@ async function refresh(req, res) {
 
     const newAccessToken  = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user.id);
-    const newHash         = await bcrypt.hash(newRefreshToken, BCRYPT_ROUNDS);
+    const newHash         = await bcrypt.hash(newRefreshToken, BCRYPT_ROUNDS_FAST);
 
     await db.execute(`UPDATE users SET refresh_token = ? WHERE id = ?`, [newHash, user.id]);
 

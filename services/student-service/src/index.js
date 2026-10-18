@@ -39,5 +39,14 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 });
 
-app.listen(PORT, () => console.log(`[student-service] Running on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`[student-service] Running on port ${PORT}`));
+
+function shutdown(signal) {
+  console.log(`[student-service] ${signal} — shutting down`);
+  server.close(() => process.exit(0));
+  setTimeout(() => process.exit(1), 10000);
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT',  () => shutdown('SIGINT'));
+
 module.exports = app;

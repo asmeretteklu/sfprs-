@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="SFPRS — Student Fee Payment & Registration System. Microlink IT College, Mekelle, Tigray.">
-  <title>Login — SFPRS | Microlink IT College</title>
+  <title>Sign In — SFPRS · Microlink IT College</title>
+  <meta name="description" content="Sign in to the Student Fee Payment and Registration System at Microlink IT College, Mekelle, Tigray.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%237C1F31%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 fill=%22%23FFD95D%22 font-size=%2260%22 font-weight=%22bold%22>M</text></svg>">
   <link rel="stylesheet" href="shared/style.css">
 </head>
 <body>
@@ -16,32 +17,6 @@
       <div class="auth-brand-icon">M</div>
       <h1>Microlink IT College</h1>
       <p>Student Fee Payment & Registration System</p>
-    </div>
-    <div class="auth-phases">
-      <div class="auth-phase-item done">
-        <div class="auth-phase-dot"></div>
-        <span>Phase 01 · Project Setup Complete</span>
-      </div>
-      <div class="auth-phase-item done">
-        <div class="auth-phase-dot"></div>
-        <span>Phase 02 · Auth & Role System</span>
-      </div>
-      <div class="auth-phase-item done">
-        <div class="auth-phase-dot"></div>
-        <span>Phase 03 · Student Registration</span>
-      </div>
-      <div class="auth-phase-item done">
-        <div class="auth-phase-dot"></div>
-        <span>Phase 04 · Fee Payment Engine</span>
-      </div>
-      <div class="auth-phase-item done">
-        <div class="auth-phase-dot"></div>
-        <span>Phase 05 · Admin Panel & Reports</span>
-      </div>
-      <div class="auth-phase-item done">
-        <div class="auth-phase-dot"></div>
-        <span>Phase 06 · Live at Microlink ✓</span>
-      </div>
     </div>
   </div>
 
@@ -57,11 +32,11 @@
 
       <h2>
         <span class="en">Welcome back</span>
-        <span class="am" style="font-family:'Noto Sans Ethiopic',sans-serif;">እንኳን ደህና መጡ</span>
+        <span class="am">እንኳን ደህና መጡ</span>
       </h2>
       <p class="auth-sub">
         <span class="en">Sign in to continue to SFPRS</span>
-        <span class="am" style="font-family:'Noto Sans Ethiopic',sans-serif;">ወደ SFPRS ለመቀጠል ይግቡ</span>
+        <span class="am">ወደ SFPRS ለመቀጠል ይግቡ</span>
       </p>
 
       <div id="alertBox" class="alert alert-error" style="display:none">
@@ -91,7 +66,10 @@
         </div>
 
         <button type="submit" id="submitBtn" class="btn btn-primary btn-full btn-lg fade-up delay-3" style="margin-top:8px">
-          <span id="btnText">Sign In</span>
+          <span id="btnText">
+            <span class="en">Sign In</span>
+            <span class="am">ይግቡ</span>
+          </span>
           <span id="btnSpinner" class="spinner" style="display:none"></span>
         </button>
       </form>
@@ -131,7 +109,7 @@
   function hideAlert() { alertBox.style.display = 'none'; }
 
   function setLoading(v) {
-    btnText.textContent = v ? 'Signing in...' : 'Sign In';
+    btnText.style.opacity = v ? '0.5' : '1';
     btnSpinner.style.display = v ? 'inline-block' : 'none';
     document.getElementById('submitBtn').disabled = v;
   }

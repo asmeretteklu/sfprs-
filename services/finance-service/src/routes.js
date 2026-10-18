@@ -19,6 +19,7 @@ router.get('/payments',           authenticateJWT, requireRole('finance_officer'
 router.get('/payments/:id',       authenticateJWT, requireRole('finance_officer', 'super_admin'), controller.getPayment);
 
 // ── Receipts ──────────────────────────────────────────────────
+router.get('/receipts',             authenticateJWT, controller.listReceipts);
 router.get('/receipts/:paymentId', authenticateJWT, controller.getReceipt);
 router.get('/receipts/:paymentId/download', authenticateJWT, controller.downloadReceipt);
 

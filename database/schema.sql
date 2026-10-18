@@ -30,19 +30,22 @@ CREATE TABLE IF NOT EXISTS roles (
 -- Table 2: users
 -- ============================================================
 CREATE TABLE IF NOT EXISTS users (
-  id              CHAR(36)      NOT NULL DEFAULT (UUID()),
-  email           VARCHAR(255)  NOT NULL UNIQUE,
-  password_hash   VARCHAR(255)  NOT NULL,
-  role_id         CHAR(36)      NOT NULL,
-  first_name      VARCHAR(100)  NOT NULL,
-  last_name       VARCHAR(100)  NOT NULL,
-  phone           VARCHAR(20)   NULL,
-  is_active       TINYINT(1)    NOT NULL DEFAULT 1,
-  last_login_at   DATETIME      NULL,
-  refresh_token   TEXT          NULL,
-  created_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at      DATETIME      NULL,
+  id                    CHAR(36)      NOT NULL DEFAULT (UUID()),
+  email                 VARCHAR(255)  NOT NULL UNIQUE,
+  password_hash         VARCHAR(255)  NOT NULL,
+  role_id               CHAR(36)      NOT NULL,
+  first_name            VARCHAR(100)  NOT NULL,
+  last_name             VARCHAR(100)  NOT NULL,
+  phone                 VARCHAR(20)   NULL,
+  is_active             TINYINT(1)    NOT NULL DEFAULT 1,
+  failed_login_attempts INT           NOT NULL DEFAULT 0,
+  locked_until          DATETIME      NULL,
+  last_login_at         DATETIME      NULL,
+  password_changed_at   DATETIME      NULL,
+  refresh_token         TEXT          NULL,
+  created_at            DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at            DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at            DATETIME      NULL,
   PRIMARY KEY (id),
   INDEX idx_users_email (email),
   INDEX idx_users_role_id (role_id),
@@ -306,3 +309,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   INDEX idx_audit_logs_created_at (created_at)
   -- No deleted_at — audit logs are immutable
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- Table 13: schema_migrations (version tracking)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version     VARCHAR(50)   NOT NULL,
+  applied_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Record initial schema version
+INSERT IGNORE INTO schema_migrations (version) VALUES ('001_initial_schema');

@@ -8,9 +8,19 @@ const router     = express.Router();
 const controller = require('./controller');
 const { upload } = require('./upload');
 const { body, param } = require('express-validator');
+const rateLimit  = require('express-rate-limit');
 
 // Auth middleware — lightweight local JWT verifier
 const { authenticateJWT, requireRole } = require('./authMiddleware');
+
+// Rate-limiter for public endpoints (tracking, reference data)
+const publicLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'TooManyRequests', message: 'Please slow down and try again later.' },
+});
 
 // ── Validation ────────────────────────────────────────────────
 const regValidation = [
@@ -23,13 +33,14 @@ const regValidation = [
 ];
 
 // ── Public reference data ─────────────────────────────────────
-router.get('/departments',    controller.getDepartments);
-router.get('/courses',        controller.getCourses);
-router.get('/academic-years', controller.getAcademicYears);
+router.get('/departments',    publicLimiter, controller.getDepartments);
+router.get('/courses',        publicLimiter, controller.getCourses);
+router.get('/academic-years', publicLimiter, controller.getAcademicYears);
 
 // ── Public registration ───────────────────────────────────────
 router.post(
   '/registrations',
+  publicLimiter,
   upload.fields([
     { name: 'idDocument', maxCount: 1 },
     { name: 'certificate', maxCount: 1 },
@@ -38,7 +49,7 @@ router.post(
   regValidation,
   controller.submitRegistration
 );
-router.get('/registrations/track/:reference', controller.trackRegistration);
+router.get('/registrations/track/:reference', publicLimiter, controller.trackRegistration);
 
 // ── Authenticated (student) ────────────────────────────────────
 router.get('/me',         authenticateJWT, requireRole('student'), controller.getMyProfile);

@@ -4,6 +4,7 @@
 'use strict';
 
 const mysql = require('mysql2/promise');
+const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 const path = require('path');
@@ -24,13 +25,17 @@ function getPool() {
   return pool;
 }
 
-// Generate reference number: MLK-REG-YYYY-NNNN
-async function generateRefNumber(db) {
+// Generate reference number: MLK-REG-YYYY-NNNN (race-condition safe)
+async function generateRefNumber(conn) {
   const year = new Date().getFullYear();
-  const [[{ count }]] = await db.execute(
-    `SELECT COUNT(*) AS count FROM registrations WHERE YEAR(created_at) = ?`, [year]
+  // Use MAX seq within a locked read — safe under concurrent inserts
+  const [[row]] = await conn.execute(
+    `SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(reference_number, '-', -1) AS UNSIGNED)), 0) AS maxSeq
+     FROM registrations
+     WHERE YEAR(created_at) = ? AND reference_number LIKE ?`,
+    [year, `MLK-REG-${year}-%`]
   );
-  const seq = String(parseInt(count) + 1).padStart(4, '0');
+  const seq = String((row.maxSeq || 0) + 1).padStart(4, '0');
   return `MLK-REG-${year}-${seq}`;
 }
 
@@ -66,9 +71,11 @@ async function submitRegistration(req, res) {
   const photoUrl= files.photo       ? `/uploads/${files.photo[0].filename}`       : null;
 
   const db = getPool();
+  const conn = await db.getConnection();
   try {
-    const ref = await generateRefNumber(db);
-    await db.execute(
+    await conn.beginTransaction();
+    const ref = await generateRefNumber(conn);
+    await conn.execute(
       `INSERT INTO registrations
          (id, reference_number, applicant_first_name, applicant_last_name,
           applicant_phone, applicant_email, department_id, course_id,
@@ -77,25 +84,29 @@ async function submitRegistration(req, res) {
       [ref, applicantFirstName, applicantLastName, applicantPhone, applicantEmail || null,
        departmentId, courseId, academicYearId, idUrl, certUrl, photoUrl]
     );
+    await conn.commit();
 
     // Trigger email notification (async, non-blocking)
-    notifyNewRegistration(ref, applicantFirstName, applicantEmail).catch(console.error);
+    notifyNewRegistration(ref, applicantFirstName, applicantEmail).catch(e =>
+      console.warn('[notify] Registration email failed:', e.message)
+    );
 
     return res.status(201).json({
       message: 'Registration submitted successfully.',
       referenceNumber: ref,
     });
   } catch (err) {
+    await conn.rollback();
     console.error('[submitRegistration]', err);
     return res.status(500).json({ error: 'InternalError', message: 'Registration failed.' });
+  } finally {
+    conn.release();
   }
 }
 
 async function notifyNewRegistration(ref, name, email) {
   if (!email) return;
-  // Call notification service
   try {
-    const axios = require('axios');
     await axios.post(`${process.env.NOTIFY_SERVICE_URL || 'http://localhost:3004'}/api/notify/registration`, {
       referenceNumber: ref, name, email,
     });
@@ -200,7 +211,7 @@ async function approveRegistration(req, res) {
     await conn.beginTransaction();
 
     const [regs] = await conn.execute(
-      `SELECT * FROM registrations WHERE id = ? AND deleted_at IS NULL`, [req.params.id]
+      `SELECT * FROM registrations WHERE id = ? AND deleted_at IS NULL FOR UPDATE`, [req.params.id]
     );
     if (!regs.length) {
       await conn.rollback();
@@ -212,12 +223,18 @@ async function approveRegistration(req, res) {
       return res.status(400).json({ error: 'InvalidStatus', message: `Cannot approve registration in status: ${reg.status}` });
     }
 
-    // Generate student ID number: MLK-YYYY-NNN
+    // Generate student ID number race-condition safe: MLK-YYYY-NNNN
     const year = new Date().getFullYear();
-    const [[{ cnt }]] = await conn.execute(
-      `SELECT COUNT(*) AS cnt FROM students WHERE YEAR(created_at) = ?`, [year]
+    const [[row]] = await conn.execute(
+      `SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(student_id_number, '-', -1) AS UNSIGNED)), 0) AS maxSeq
+       FROM students WHERE YEAR(created_at) = ? AND student_id_number LIKE ?`,
+      [year, `MLK-${year}-%`]
     );
-    const studentIdNum = `MLK-${year}-${String(parseInt(cnt) + 1).padStart(4, '0')}`;
+    const studentIdNum = `MLK-${year}-${String((row.maxSeq || 0) + 1).padStart(4, '0')}`;
+
+    // Use DOB/gender from registration body if provided, otherwise safe defaults
+    const dob    = req.body?.dateOfBirth || null;
+    const gender = ['male','female','other'].includes(req.body?.gender) ? req.body.gender : 'other';
 
     // Create student record
     const studentId = uuidv4();
@@ -225,9 +242,10 @@ async function approveRegistration(req, res) {
       `INSERT INTO students
          (id, student_id_number, first_name, last_name, date_of_birth, gender, phone, email,
           department_id, course_id, academic_year_id, enrollment_status)
-       VALUES (?, ?, ?, ?, '2000-01-01', 'male', ?, ?, ?, ?, ?, 'active')`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
       [studentId, studentIdNum,
        reg.applicant_first_name, reg.applicant_last_name,
+       dob || '2000-01-01', gender,
        reg.applicant_phone, reg.applicant_email,
        reg.department_id, reg.course_id, reg.academic_year_id]
     );
@@ -343,7 +361,26 @@ async function getStudent(req, res) {
 }
 
 async function getMyProfile(req, res) {
-  return getStudent({ ...req, params: { studentId: req.user.id } }, res);
+  // Look up student by their linked user_id, not the auth user UUID directly
+  const db = getPool();
+  try {
+    const [rows] = await db.execute(
+      `SELECT s.*, d.name AS department, d.code AS dept_code, c.name AS course, a.label AS academic_year
+       FROM   students s
+       JOIN   departments d ON d.id = s.department_id
+       JOIN   courses c ON c.id = s.course_id
+       JOIN   academic_years a ON a.id = s.academic_year_id
+       WHERE  s.user_id = ? AND s.deleted_at IS NULL`,
+      [req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'NotFound', message: 'No student record linked to your account.' });
+    const student = rows[0];
+    delete student.password_hash;
+    return res.json(student);
+  } catch (err) {
+    console.error('[getMyProfile]', err);
+    return res.status(500).json({ error: 'InternalError' });
+  }
 }
 
 async function getMyStatus(req, res) {

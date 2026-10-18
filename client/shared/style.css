@@ -3,7 +3,7 @@
    Microlink IT College · Director: Asmeret · 2025
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Ethiopic:wght@400;600;700&display=swap');
 
 /* ── Brand Palette ─────────────────────────────────────────── */
 @property --gradient-angle {
@@ -76,7 +76,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 .font-mono { font-family: 'Fira Code', 'Cascadia Code', monospace; }
 
 /* Amharic mode */
-[data-lang="am"] { font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif; }
+body.lang-am { font-family: 'Noto Sans Ethiopic', 'Inter', sans-serif; }
 
 /* ── Layout — Sidebar App Shell ────────────────────────────── */
 .app-shell { display: flex; min-height: 100vh; }
@@ -284,7 +284,7 @@ h4 { font-size: 0.95rem; font-weight: 600; }
   position: absolute;
   right: 18px; top: 18px;
   font-size: 2rem;
-  opacity: 0.12;
+  opacity: 0.20;
 }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
@@ -325,6 +325,12 @@ h4 { font-size: 0.95rem; font-weight: 600; }
 
 /* ── Forms ───────────────────────────────────────────────────── */
 .form-group { margin-bottom: 18px; }
+/* Language display logic */
+.am { display: none !important; }
+body.lang-am .en { display: none !important; }
+body.lang-am .am { display: initial !important; }
+/* If it's a span, it will be inline, if it's h2, it will be block-like */
+
 .form-label {
   display: block;
   font-size: 0.8125rem;
@@ -332,9 +338,6 @@ h4 { font-size: 0.95rem; font-weight: 600; }
   color: var(--text-secondary);
   margin-bottom: 6px;
 }
-.form-label .am { display: none; font-family: 'Noto Sans Ethiopic', sans-serif; }
-body.lang-am .form-label .en { display: none; }
-body.lang-am .form-label .am { display: inline; }
 
 .form-input, .form-select, .form-textarea {
   width: 100%;
@@ -439,6 +442,8 @@ body.lang-am .form-label .am { display: inline; }
 .badge-suspended { background: rgba(124,31,49,0.2); color: var(--claret); }
 .badge-completed { background: rgba(105,164,129,0.2); color: var(--mint); }
 .badge-review    { background: rgba(201,199,105,0.15); color: var(--citron); }
+.badge-info      { background: rgba(201,199,105,0.15); color: var(--citron); }
+.badge-warning   { background: rgba(255,217,93,0.15); color: var(--mustard); }
 
 /* ── Progress Bar ────────────────────────────────────────────── */
 .progress-bar-wrap {
@@ -800,20 +805,17 @@ body.lang-am .form-label .am { display: inline; }
   margin: 0 auto 20px;
   box-shadow: 0 8px 32px rgba(124,31,49,0.4);
 }
-.auth-brand h1 { font-size: 1.5rem; color: white; margin-bottom: 6px; }
-.auth-brand p { font-size: 0.875rem; color: rgba(255,255,255,0.5); }
-.auth-phases { margin-top: 40px; display: flex; flex-direction: column; gap: 12px; position: relative; z-index: 1; }
-.auth-phase-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 16px;
-  background: rgba(255,255,255,0.05);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255,255,255,0.08);
+.auth-brand h1 { 
+  font-size: 1.8rem; 
+  color: white; 
+  margin-bottom: 8px; 
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  background: linear-gradient(to bottom, #fff, #ccc);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-.auth-phase-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.auth-phase-item span { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
-.auth-phase-item.done .auth-phase-dot { background: var(--mint); }
-.auth-phase-item.done span { color: rgba(255,255,255,0.8); }
+.auth-brand p { font-size: 0.95rem; color: rgba(255,255,255,0.6); font-weight: 500; }
 
 .auth-right {
   flex: 1;
@@ -831,10 +833,84 @@ body.lang-am .form-label .am { display: inline; }
 @media (max-width: 768px) {
   .auth-left { display: none; }
   .auth-right { flex: 1; max-width: 100%; }
-  .sidebar { transform: translateX(-100%); }
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 200;
+  }
   .sidebar.open { transform: translateX(0); }
   .main-content { margin-left: 0; }
+  .app-shell::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 199;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .sidebar.open + .main-content + .app-shell::after,
+  .app-shell:has(.sidebar.open)::after {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .btn-icon { display: inline-flex !important; }
 }
+
+/* ── Search Bar ──────────────────────────────────────────────── */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--claret); }
+.search-bar svg { color: var(--text-muted); flex-shrink: 0; }
+.search-bar input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.875rem;
+  width: 100%;
+  font-family: var(--font);
+}
+.search-bar input::placeholder { color: var(--text-muted); }
+
+/* ── Pagination ──────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 16px;
+}
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.page-btn:hover { border-color: var(--claret); color: var(--claret); }
+.page-btn.active { background: var(--claret); border-color: var(--claret); color: #fff; font-weight: 600; }
+
+/* ── Skeleton text loaders ───────────────────────────────────── */
+.skeleton-text {
+  height: 14px;
+  border-radius: 4px;
+  margin: 6px 0;
+  width: 80%;
+}
+.skeleton-text.short { width: 45%; }
 
 /* ── Scrollbar ────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -843,11 +919,10 @@ body.lang-am .form-label .am { display: inline; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
 
 /* ── Animations ───────────────────────────────────────────────── */
-@keyframes fadeUp {
+@keyframes fadeUpAnim {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.fade-up { animation: fadeUp 0.3s ease; }
 
 /* ── Micro-interaction: shimmer loading ────────────────────────── */
 .shimmer {

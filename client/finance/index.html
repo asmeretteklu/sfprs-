@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finance Portal — SFPRS · Microlink IT College</title>
+  <meta name="description" content="Finance officer portal for recording payments and managing fee schedules.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%237C1F31%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22central%22 text-anchor=%22middle%22 fill=%22%23FFD95D%22 font-size=%2260%22 font-weight=%22bold%22>M</text></svg>">
+  <link rel="stylesheet" href="../shared/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">M</div>
+        <div class="logo-text"><strong>Microlink IT</strong><span>Finance Portal</span></div>
+      </div>
+    </div>
+    <div class="sidebar-section-label">Finance</div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item active">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Dashboard
+      </a>
+      <a href="payments.html" class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        Payments
+      </a>
+      <a href="ledger.html" class="nav-item">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Ledger
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">?</div>
+        <div class="user-info">
+          <strong class="user-name">Loading...</strong>
+          <span class="user-role">Finance Officer</span>
+        </div>
+        <button id="logoutBtn" title="Logout">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h2 id="greeting">Welcome</h2>
+        <p class="text-sm text-muted">Today's payment overview at Microlink IT College.</p>
+      </div>
+    </header>
+
+    <div class="page-content fade-up delay-1">
+      <!-- Stats -->
+      <div class="stats-grid mb-6">
+        <div class="stat-card mint">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Today's Collection</div>
+          <div class="stat-value" id="statToday">--</div>
+        </div>
+        <div class="stat-card mustard">
+          <div class="stat-icon">📅</div>
+          <div class="stat-label">Monthly Collection</div>
+          <div class="stat-value" id="statMonth">--</div>
+        </div>
+        <div class="stat-card rose">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label">Overdue Students</div>
+          <div class="stat-value" id="statOverdue">--</div>
+        </div>
+      </div>
+
+      <!-- Recent Payments -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Recent Payments</h3>
+          <a href="payments.html" class="btn btn-ghost btn-sm">View All →</a>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Receipt #</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody id="recentTbody">
+              <tr><td colspan="5"><div class="shimmer skeleton-text"></div><div class="shimmer skeleton-text short"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../shared/auth.js"></script>
+<script src="../shared/api.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!AUTH.requireRole('finance_officer', 'super_admin')) return;
+  AUTH.injectSidebarUser();
+  document.getElementById('greeting').textContent = AUTH.getGreeting();
+  await loadDashboard();
+});
+
+async function loadDashboard() {
+  try {
+    const d = await API.finance('/dashboard');
+    document.getElementById('statToday').textContent   = fmtCurrency(d.today?.total   || 0);
+    document.getElementById('statMonth').textContent   = fmtCurrency(d.month?.total   || 0);
+    document.getElementById('statOverdue').textContent = d.overdue?.students || 0;
+
+    const tbody = document.getElementById('recentTbody');
+    if (!d.recentPayments?.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No payments yet today.</td></tr>';
+    } else {
+      tbody.innerHTML = d.recentPayments.map(p => `
+        <tr>
+          <td>
+            <div style="font-weight:600">${esc(p.first_name)} ${esc(p.last_name)}</div>
+            <div class="text-xs text-muted">${esc(p.student_id_number)}</div>
+          </td>
+          <td class="text-xs" style="font-family:monospace;color:var(--mustard)">${esc(p.receipt_number || '—')}</td>
+          <td style="font-weight:600;color:var(--mint)">${fmtCurrency(p.amount_paid)}</td>
+          <td><span class="badge badge-info">${esc((p.payment_method||'cash').replace(/_/g,' '))}</span></td>
+          <td class="text-xs text-muted">${fmtDateTime(p.payment_date)}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    toast('Failed to load dashboard: ' + err.message, 'error');
+  }
+}
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

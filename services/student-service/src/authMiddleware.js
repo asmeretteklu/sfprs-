@@ -7,7 +7,8 @@
 
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'CHANGE_ME_IN_PRODUCTION';
+if (!process.env.JWT_SECRET) throw new Error('[student-service] JWT_SECRET env var is required');
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authenticateJWT(req, res, next) {
   let token = null;
